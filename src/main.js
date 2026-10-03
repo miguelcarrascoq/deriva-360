@@ -30,6 +30,7 @@ const orientPitchVal = document.getElementById('orient-pitch-val');
 const pitchNum = document.getElementById('pitch-num');
 const pitchRange = document.getElementById('pitch-range');
 const pitchReset = document.getElementById('pitch-reset');
+const fovNum = document.getElementById('fov-num');
 const zoomRange = document.getElementById('zoom-range');
 const zoomInBtn = document.getElementById('zoom-in');
 const zoomOutBtn = document.getElementById('zoom-out');
@@ -44,8 +45,8 @@ const FOV_STORAGE_KEY = 'deriva360.fov';
 const PITCH_MIN = -85;
 const PITCH_MAX = 85;
 const FOV_MIN = 40;
-const FOV_MAX = 100;
-const FOV_DEFAULT = 75;
+const FOV_MAX = 150;
+const FOV_DEFAULT = 100;
 const ZOOM_STEP = 5;
 
 function clampOffset(value) {
@@ -140,7 +141,7 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(100, 1, 0.1, 1000);
 camera.position.set(0, 0, 0.01);
 
 const sphereGeom = new THREE.SphereGeometry(500, 64, 40);
@@ -218,7 +219,7 @@ function clampFov(value) {
   return Math.max(FOV_MIN, Math.min(FOV_MAX, Math.round(n)));
 }
 
-/** Zoom UI level: 0 = widest (FOV 100), 60 = tightest (FOV 40). */
+/** Zoom UI level: 0 = widest (FOV_MAX), FOV_MAX-FOV_MIN = tightest (FOV_MIN). */
 function zoomLevelFromFov(fov) {
   return FOV_MAX - clampFov(fov);
 }
@@ -235,6 +236,7 @@ function setFov(value, { persist = true } = {}) {
   const fov = clampFov(value);
   camera.fov = fov;
   camera.updateProjectionMatrix();
+  fovNum.value = String(fov);
   zoomRange.value = String(zoomLevelFromFov(fov));
   if (telZoom) telZoom.textContent = `zoom ${fov}°`;
   if (persist) {
@@ -346,6 +348,15 @@ zoomRange.addEventListener('input', () => {
 
 zoomRange.addEventListener('change', () => {
   setFov(fovFromZoomLevel(zoomRange.value), { persist: true });
+});
+
+fovNum.addEventListener('change', () => {
+  setFov(fovNum.value);
+});
+
+fovNum.addEventListener('input', () => {
+  const n = Number(fovNum.value);
+  if (Number.isFinite(n)) setFov(n, { persist: false });
 });
 
 zoomInBtn.addEventListener('click', () => {

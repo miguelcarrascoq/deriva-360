@@ -425,7 +425,8 @@ body {
 }
 
 #heading-offset-num,
-#pitch-num {
+#pitch-num,
+#fov-num {
   width: 100%;
   background: #0c1016;
   color: var(--text);
@@ -436,6 +437,10 @@ body {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+}
+
+#fov-num {
+  width: 44px;
 }
 
 #heading-offset,
@@ -454,7 +459,7 @@ body {
 
 .zoom-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: 44px auto 1fr auto auto;
   gap: 4px;
   align-items: center;
 }
