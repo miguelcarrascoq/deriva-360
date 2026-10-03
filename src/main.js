@@ -40,6 +40,7 @@ const zoomOutBtn = document.getElementById('zoom-out');
 const zoomReset = document.getElementById('zoom-reset');
 const video = document.getElementById('video');
 const canvas = document.getElementById('sphere');
+const videoLoading = document.getElementById('video-loading');
 
 const OFFSET_STORAGE_KEY = 'deriva360.headingOffset';
 const PITCH_STORAGE_KEY = 'deriva360.pitch';
@@ -132,6 +133,100 @@ function shortestAngleDelta(from, to) {
 
 function setStatus(text) {
   statusEl.textContent = text;
+}
+
+function showVideoLoading(title, msg) {
+  if (!videoLoading) return;
+  const titleEl = videoLoading.querySelector('.video-loading-title');
+  const msgEl = videoLoading.querySelector('.video-loading-msg');
+  const spinner = videoLoading.querySelector('.video-loading-spinner');
+  if (titleEl && title) titleEl.textContent = title;
+  if (msgEl && msg) msgEl.textContent = msg;
+  spinner?.classList.remove('is-stopped');
+  videoLoading.hidden = false;
+  videoLoading.classList.remove('is-hiding');
+  videoLoading.setAttribute('aria-busy', 'true');
+}
+
+function hideVideoLoading() {
+  if (!videoLoading || videoLoading.hidden) return;
+  videoLoading.setAttribute('aria-busy', 'false');
+  videoLoading.classList.add('is-hiding');
+  const done = () => {
+    videoLoading.hidden = true;
+    videoLoading.classList.remove('is-hiding');
+    videoLoading.removeEventListener('transitionend', done);
+  };
+  videoLoading.addEventListener('transitionend', done);
+  // Fallback if transitionend doesn't fire (e.g. reduced motion / display none)
+  window.setTimeout(done, 400);
+}
+
+function setPlayEnabled(enabled) {
+  btnPlay.disabled = !enabled;
+  btnPlay.title = enabled ? '' : 'Esperá a que cargue el video';
+}
+
+function getBufferedRatio(el) {
+  const dur = el.duration;
+  if (!Number.isFinite(dur) || dur <= 0 || el.buffered.length === 0) return 0;
+  // Continuous coverage from the start (handles sparse TimeRanges).
+  let covered = 0;
+  for (let i = 0; i < el.buffered.length; i += 1) {
+    const start = el.buffered.start(i);
+    const end = el.buffered.end(i);
+    if (start <= covered + 0.35) covered = Math.max(covered, end);
+  }
+  return Math.min(1, covered / dur);
+}
+
+/** Enough data to start playback (browsers often never buffer 100% of large files). */
+function isVideoPlayable(el) {
+  return el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA;
+}
+
+function updateVideoLoadProgress(el) {
+  const pct = Math.round(getBufferedRatio(el) * 100);
+  setStatus(`Loading video… ${pct}%`);
+  showVideoLoading('Cargando video 360°', `Descargando… ${pct}%`);
+}
+
+function waitForVideoReady(el) {
+  updateVideoLoadProgress(el);
+  if (isVideoPlayable(el)) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const onProgress = () => {
+      updateVideoLoadProgress(el);
+      if (isVideoPlayable(el)) {
+        cleanup();
+        resolve();
+      }
+    };
+    const onReady = () => {
+      updateVideoLoadProgress(el);
+      cleanup();
+      resolve();
+    };
+    const onErr = () => {
+      cleanup();
+      reject(new Error('Could not load proxy. Run npm run proxy'));
+    };
+    const cleanup = () => {
+      el.removeEventListener('progress', onProgress);
+      el.removeEventListener('canplay', onReady);
+      el.removeEventListener('canplaythrough', onReady);
+      el.removeEventListener('loadeddata', onProgress);
+      el.removeEventListener('error', onErr);
+    };
+    el.addEventListener('progress', onProgress);
+    el.addEventListener('canplay', onReady);
+    el.addEventListener('canplaythrough', onReady);
+    el.addEventListener('loadeddata', onProgress);
+    el.addEventListener('error', onErr);
+    // Events may have already fired before listeners were attached.
+    onProgress();
+  });
 }
 
 /** --- Three.js sphere viewer --- */
@@ -857,6 +952,7 @@ function syncUiFromVideo() {
 }
 
 btnPlay.addEventListener('click', async () => {
+  if (btnPlay.disabled) return;
   if (video.paused) {
     try {
       await video.play();
@@ -906,9 +1002,15 @@ function animate() {
 
 async function boot() {
   setStatus('Loading route.json…');
+  showVideoLoading(
+    'Cargando recorrido…',
+    'Preparando mapa y video 360°…',
+  );
   const res = await fetch(assetUrl('route.json'));
   if (!res.ok) {
     setStatus('Missing route.json — run npm run route');
+    showVideoLoading('Falta route.json', 'Ejecutá npm run route y recargá.');
+    videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
     return;
   }
   routeData = await res.json();
@@ -936,13 +1038,20 @@ async function boot() {
 
   ensureRoutesOnMap({ fit: true });
 
+  setPlayEnabled(false);
+
   if (!active?.video) {
     setStatus('Active segment has no video');
+    hideVideoLoading();
     animate();
     return;
   }
 
   setStatus('Loading video proxy…');
+  showVideoLoading(
+    'Cargando video 360°',
+    'El archivo es pesado; esto puede tardar unos segundos…',
+  );
   video.src = assetUrl(active.video);
   video.load();
 
@@ -963,6 +1072,8 @@ async function boot() {
     video.addEventListener('error', onErr);
   }).catch((err) => {
     setStatus(err.message);
+    showVideoLoading('No se pudo cargar el video', err.message);
+    videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
   });
 
   if (video.readyState >= 2) {
@@ -970,11 +1081,31 @@ async function boot() {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.minFilter = THREE.LinearFilter;
     tex.magFilter = THREE.LinearFilter;
+    // RVFC may have already fired before the texture existed; force the
+    // current decoded frame onto the GPU so the sphere isn't black while paused.
+    tex.needsUpdate = true;
     sphereMat.map = tex;
     sphereMat.color.set(0xffffff);
     sphereMat.needsUpdate = true;
-    setStatus(`Ready — ${active.id} (${active.distanceM} m)`);
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      video.requestVideoFrameCallback(() => {
+        tex.needsUpdate = true;
+      });
+    }
     updateTelemetry(sampleAt(active.points, 0));
+
+    try {
+      await waitForVideoReady(video);
+      tex.needsUpdate = true;
+      setPlayEnabled(true);
+      setStatus(`Ready — ${active.id} (${active.distanceM} m)`);
+      hideVideoLoading();
+    } catch (err) {
+      setPlayEnabled(false);
+      setStatus(err.message);
+      showVideoLoading('No se pudo cargar el video', err.message);
+      videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
+    }
   }
 
   // Safety net: style may finish after route.json, or overlays may have been skipped.
@@ -986,4 +1117,6 @@ async function boot() {
 boot().catch((err) => {
   console.error(err);
   setStatus(err.message || String(err));
+  showVideoLoading('Error al iniciar', err.message || String(err));
+  videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
 });

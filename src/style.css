@@ -50,6 +50,85 @@ body {
   cursor: grabbing;
 }
 
+.video-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(2px);
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.video-loading[hidden] {
+  display: none;
+}
+
+.video-loading.is-hiding {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.video-loading-inner {
+  max-width: 360px;
+  text-align: center;
+}
+
+.video-loading-spinner {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 16px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: video-spin 0.8s linear infinite;
+}
+
+.video-loading-spinner.is-stopped {
+  animation: none;
+  border-top-color: var(--warn);
+}
+
+@keyframes video-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.video-loading-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.video-loading-msg {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.video-loading-tips {
+  margin: 0;
+  padding: 14px 16px 14px 32px;
+  list-style: disc;
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.video-loading-tips li + li {
+  margin-top: 6px;
+}
+
 #hud {
   position: absolute;
   left: 12px;
@@ -529,8 +608,15 @@ body {
   cursor: pointer;
 }
 
-#btn-play:hover {
+#btn-play:hover:not(:disabled) {
   filter: brightness(1.08);
+}
+
+#btn-play:disabled {
+  background: #2a323c;
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.85;
 }
 
 #clock {

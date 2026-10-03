@@ -10,6 +10,25 @@
     <div id="app">
       <div id="viewer">
         <canvas id="sphere"></canvas>
+        <div
+          id="video-loading"
+          class="video-loading"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div class="video-loading-inner">
+            <div class="video-loading-spinner" aria-hidden="true"></div>
+            <p class="video-loading-title">Cargando video 360°</p>
+            <p class="video-loading-msg">El archivo es pesado; esto puede tardar unos segundos…</p>
+            <ul class="video-loading-tips">
+              <li>Arrastrá en el video para mirar alrededor</li>
+              <li>Usá Play / la barra para avanzar en el recorrido</li>
+              <li>El marcador del mapa sigue el tiempo del video</li>
+              <li>Ajustá yaw / pitch si “adelante” no coincide con la ruta</li>
+            </ul>
+          </div>
+        </div>
         <div id="hud">
           <div id="status">Loading…</div>
           <div id="telemetry">
@@ -70,7 +89,9 @@
         <div class="controls">
           <div class="playback">
             <div class="playback-row">
-              <button id="btn-play" type="button">Play</button>
+              <button id="btn-play" type="button" disabled title="Esperá a que cargue el video">
+                Play
+              </button>
               <input id="seek" type="range" min="0" max="1000" value="0" step="1" />
               <span id="clock">0:00 / 0:00</span>
             </div>
@@ -195,7 +216,13 @@
         </div>
       </aside>
     </div>
-    <video id="video" playsinline crossorigin="anonymous" style="display: none"></video>
+    <video
+      id="video"
+      playsinline
+      preload="auto"
+      crossorigin="anonymous"
+      style="display: none"
+    ></video>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
