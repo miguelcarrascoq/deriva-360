@@ -2,6 +2,8 @@
 
 Feasibility viewer for geo-located equirectangular (360°) video synced to GPX tracks from Insta360.
 
+![Deriva 360 preview](./docs/preview.jpg)
+
 ## Live demo
 
 **GitHub Pages:** [https://miguelcarrascoq.github.io/deriva-360/](https://miguelcarrascoq.github.io/deriva-360/)
