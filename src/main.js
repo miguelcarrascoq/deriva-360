@@ -35,7 +35,6 @@ const zoomRange = document.getElementById('zoom-range');
 const zoomInBtn = document.getElementById('zoom-in');
 const zoomOutBtn = document.getElementById('zoom-out');
 const zoomReset = document.getElementById('zoom-reset');
-const yawPresetButtons = document.querySelectorAll('.yaw-presets button[data-yaw]');
 const video = document.getElementById('video');
 const canvas = document.getElementById('sphere');
 
@@ -185,9 +184,6 @@ function setHeadingOffset(value, { persist = true, sync = true } = {}) {
   const n = clampOffset(value);
   headingOffset.value = String(n);
   headingOffsetNum.value = String(n);
-  for (const btn of yawPresetButtons) {
-    btn.classList.toggle('active', Number(btn.dataset.yaw) === n);
-  }
   if (persist) {
     try {
       localStorage.setItem(OFFSET_STORAGE_KEY, String(n));
@@ -370,12 +366,6 @@ zoomOutBtn.addEventListener('click', () => {
 zoomReset.addEventListener('click', () => {
   setFov(FOV_DEFAULT);
 });
-
-for (const btn of yawPresetButtons) {
-  btn.addEventListener('click', () => {
-    setHeadingOffset(btn.dataset.yaw);
-  });
-}
 
 canvas.addEventListener('pointerdown', (e) => {
   isDragging = true;

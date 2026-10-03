@@ -81,7 +81,8 @@ body {
 #sidebar {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: minmax(160px, 34%) minmax(0, 1fr);
+  /* Map grows; controls hug content instead of leaving empty space */
+  grid-template-rows: minmax(140px, 1fr) auto;
   min-height: 0;
   min-width: 0;
   background: var(--panel);
@@ -176,11 +177,14 @@ body {
 
 .controls {
   min-height: 0;
+  max-height: min(46vh, 340px);
   overflow: auto;
   padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  container-type: inline-size;
+  container-name: controls;
 }
 
 .playback {
@@ -194,7 +198,8 @@ body {
 }
 
 .playback-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
 }
@@ -249,21 +254,21 @@ body {
 
 .yaw-calib-body {
   display: grid;
-  grid-template-columns: minmax(84px, 92px) 1fr;
-  gap: 6px;
+  grid-template-columns: minmax(84px, 110px) minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
 }
 
 .orient-pad {
   position: relative;
   width: 100%;
-  max-width: 92px;
+  max-width: 110px;
   aspect-ratio: 1;
   touch-action: none;
   user-select: none;
   cursor: grab;
   outline: none;
-  margin: 0 auto;
+  margin: 0;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 45%, #2a3340 0%, #171c24 72%),
@@ -413,7 +418,14 @@ body {
 .yaw-calib-side {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ctrl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -424,44 +436,44 @@ body {
   line-height: 1.1;
 }
 
+.ctrl-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+
+.ctrl-row:has(#pitch-reset) {
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+}
+
+.zoom-row {
+  grid-template-columns: 44px auto minmax(0, 1fr) auto auto;
+}
+
 #heading-offset-num,
 #pitch-num,
 #fov-num {
   width: 100%;
+  min-width: 0;
   background: #0c1016;
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 2px 5px;
+  padding: 3px 4px;
   font-size: 12px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
 
-#fov-num {
-  width: 44px;
-}
-
 #heading-offset,
 #pitch-range,
 #zoom-range {
   width: 100%;
-  height: 14px;
-}
-
-.pitch-row {
-  display: grid;
-  grid-template-columns: 48px 1fr auto;
-  gap: 4px;
-  align-items: center;
-}
-
-.zoom-row {
-  display: grid;
-  grid-template-columns: 44px auto 1fr auto auto;
-  gap: 4px;
-  align-items: center;
+  min-width: 0;
+  height: 18px;
 }
 
 #pitch-reset,
@@ -472,19 +484,25 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 2px 5px;
-  font-size: 10px;
+  padding: 3px 6px;
+  font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
   line-height: 1.2;
+  flex-shrink: 0;
+}
+
+#pitch-reset {
+  min-width: 28px;
+  text-align: center;
 }
 
 #zoom-in,
 #zoom-out {
-  min-width: 22px;
-  font-size: 13px;
+  min-width: 28px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 1px 4px;
+  padding: 2px 6px;
 }
 
 #pitch-reset:hover,
@@ -499,37 +517,6 @@ body {
   color: var(--accent);
 }
 
-.yaw-presets {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 2px;
-}
-
-.yaw-presets button {
-  flex: 1 1 0;
-  min-width: 0;
-  background: #21262d;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px 2px;
-  font-size: 10px;
-  line-height: 1.2;
-  cursor: pointer;
-}
-
-.yaw-presets button:hover,
-.yaw-presets button.active {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-@media (max-width: 640px) {
-  .pitch-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 #btn-play {
   background: var(--accent);
   color: #04140a;
@@ -540,7 +527,6 @@ body {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 #btn-play:hover {
@@ -550,10 +536,10 @@ body {
 #clock {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-width: 64px;
+  min-width: 0;
   text-align: right;
   font-size: 11px;
-  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .hint {
@@ -591,32 +577,96 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Narrow phones: give controls more of the bottom panel */
-@media (max-width: 640px) {
-  #app {
-    grid-template-rows: minmax(34vh, 1fr) minmax(320px, 55vh);
+/* Wider controls strip: enlarge pad and keep sliders beside it */
+@container controls (min-width: 400px) {
+  .yaw-calib-body {
+    grid-template-columns: minmax(100px, 128px) minmax(0, 1fr);
   }
 
-  #sidebar {
-    grid-template-rows: minmax(140px, 28%) minmax(0, 1fr);
+  .orient-pad {
+    max-width: 128px;
   }
 
+  #orient-yaw-val {
+    font-size: 13px;
+  }
+
+  #orient-pitch-val {
+    font-size: 11px;
+  }
+}
+
+/* Panel-width adaptations (sidebar can be narrow while viewport is wide) */
+@container controls (max-width: 420px) {
   .yaw-calib-body {
     grid-template-columns: 1fr;
-    justify-items: center;
+    justify-items: stretch;
+    gap: 8px;
+  }
+
+  .orient-pad {
+    margin: 0 auto;
+    max-width: 100px;
   }
 
   .yaw-calib-side {
     width: 100%;
   }
 
+  .zoom-row {
+    grid-template-columns: 48px auto minmax(0, 1fr) auto;
+  }
+
+  .zoom-row #zoom-reset {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@container controls (max-width: 300px) {
   .playback-row {
-    flex-wrap: wrap;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   #clock {
-    width: 100%;
+    grid-column: 1 / -1;
     text-align: left;
+  }
+
+  .ctrl-row {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .ctrl-row:has(#pitch-reset) {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+
+  .zoom-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+
+  .zoom-row #fov-num {
+    grid-column: 1 / -1;
+  }
+
+  .zoom-row #zoom-reset {
+    grid-column: auto;
+    justify-self: stretch;
+  }
+
+  .yaw-calib-sub {
+    display: none;
+  }
+}
+
+/* Narrow phones: taller bottom sheet; map still grows above compact controls */
+@media (max-width: 640px) {
+  #app {
+    grid-template-rows: minmax(34vh, 1fr) minmax(320px, 55vh);
+  }
+
+  .controls {
+    max-height: min(40vh, 300px);
   }
 }
 
@@ -630,12 +680,15 @@ body {
   #sidebar {
     border-top: 0;
     border-left: 1px solid var(--border);
-    /* Still stacked inside until panel is wide enough */
-    grid-template-rows: minmax(180px, 36%) minmax(0, 1fr);
+    grid-template-rows: minmax(220px, 1fr) auto;
   }
 
   #map-panel {
     border-bottom: 1px solid var(--border);
+  }
+
+  .controls {
+    max-height: min(42vh, 320px);
   }
 }
 
@@ -645,19 +698,10 @@ body {
   #app {
     grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.72fr);
   }
-
-  #sidebar {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(200px, 42%) minmax(0, 1fr);
-  }
 }
 
 @media (min-width: 1600px) {
   #app {
     grid-template-columns: minmax(0, 1.75fr) minmax(400px, 0.65fr);
-  }
-
-  #sidebar {
-    grid-template-rows: minmax(220px, 45%) minmax(0, 1fr);
   }
 }
