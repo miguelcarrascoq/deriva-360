@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+/** Asset URL under Vite `base` (needed for GitHub Pages `/deriva-360/`). */
+function assetUrl(path) {
+  const base = import.meta.env.BASE_URL || '/';
+  const clean = String(path || '').replace(/^\/+/, '');
+  return `${base}${clean}`;
+}
+
 const statusEl = document.getElementById('status');
 const telTime = document.getElementById('tel-time');
 const telSpeed = document.getElementById('tel-speed');
@@ -727,7 +734,7 @@ function animate() {
 
 async function boot() {
   setStatus('Loading route.json…');
-  const res = await fetch('/route.json');
+  const res = await fetch(assetUrl('route.json'));
   if (!res.ok) {
     setStatus('Missing route.json — run npm run route');
     return;
@@ -756,7 +763,7 @@ async function boot() {
   }
 
   setStatus('Loading video proxy…');
-  video.src = `/${active.video}`;
+  video.src = assetUrl(active.video);
   video.load();
 
   await new Promise((resolve, reject) => {
