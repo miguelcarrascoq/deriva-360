@@ -744,23 +744,6 @@ let active = null;
 let mapInteractionsBound = false;
 let didFitActiveBounds = false;
 
-function boundsOfAll(segments) {
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-  let minLon = Infinity;
-  let maxLon = -Infinity;
-  for (const s of segments) {
-    minLat = Math.min(minLat, s.bounds.minLat);
-    maxLat = Math.max(maxLat, s.bounds.maxLat);
-    minLon = Math.min(minLon, s.bounds.minLon);
-    maxLon = Math.max(maxLon, s.bounds.maxLon);
-  }
-  return [
-    [minLon, minLat],
-    [maxLon, maxLat],
-  ];
-}
-
 function bindMapInteractions() {
   if (mapInteractionsBound) return;
   mapInteractionsBound = true;
@@ -858,6 +841,12 @@ function placeTrackMarkers() {
   trackMarker.setLngLat([p0.lon, p0.lat]).setRotation(p0.bearing ?? 0).addTo(map);
 }
 
+/** Keep the GPS marker (dot + heading arrow) fixed in the map viewport center. */
+function followTrackOnMap(sample) {
+  if (!sample) return;
+  map.setCenter([sample.lon, sample.lat]);
+}
+
 function addRoutesToMap({ fit = false } = {}) {
   if (!routeData || !active) return false;
   // Prefer getStyle() over isStyleLoaded(): the latter can stay false even when
@@ -881,13 +870,9 @@ function addRoutesToMap({ fit = false } = {}) {
     placeTrackMarkers();
 
     if (fit || !didFitActiveBounds) {
-      const focus = active.bounds
-        ? [
-            [active.bounds.minLon, active.bounds.minLat],
-            [active.bounds.maxLon, active.bounds.maxLat],
-          ]
-        : boundsOfAll(routeData.segments);
-      map.fitBounds(focus, { padding: 48, duration: 0, maxZoom: 16 });
+      // Follow-mode start: center on the playable track (not fit whole route).
+      const p0 = active.points[0];
+      map.jumpTo({ center: [p0.lon, p0.lat], zoom: 15 });
       didFitActiveBounds = true;
     }
     return true;
@@ -930,6 +915,7 @@ function updateTelemetry(sample) {
   trackMarker.setLngLat([sample.lon, sample.lat]);
   // Map arrow = true travel direction (GPS). Video yaw offset is visual calibration only.
   trackMarker.setRotation(sample.bearing);
+  followTrackOnMap(sample);
   updateOrientPad();
 
   if (alignHeading.checked && !isDragging) {
