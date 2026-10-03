@@ -18,15 +18,20 @@
           aria-busy="true"
         >
           <div class="video-loading-inner">
-            <div class="video-loading-spinner" aria-hidden="true"></div>
-            <p class="video-loading-title">Loading 360° video</p>
-            <p class="video-loading-msg">The file is large; this may take a few seconds…</p>
+            <div class="video-loading-progress">
+              <div class="video-loading-spinner" aria-hidden="true"></div>
+              <p class="video-loading-title">Loading 360° video</p>
+              <p class="video-loading-msg">The file is large; this may take a few seconds…</p>
+            </div>
             <ul class="video-loading-tips">
               <li>Drag on the video to look around</li>
               <li>Use Play / the seek bar to move along the route</li>
               <li>The map marker follows the video time</li>
               <li>Adjust yaw / pitch if “forward” doesn’t match the track</li>
             </ul>
+            <button type="button" id="video-loading-ok" class="video-loading-ok" hidden>
+              OK
+            </button>
           </div>
         </div>
         <div id="hud">

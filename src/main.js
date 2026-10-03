@@ -41,6 +41,7 @@ const zoomReset = document.getElementById('zoom-reset');
 const video = document.getElementById('video');
 const canvas = document.getElementById('sphere');
 const videoLoading = document.getElementById('video-loading');
+const videoLoadingOk = document.getElementById('video-loading-ok');
 
 const OFFSET_STORAGE_KEY = 'deriva360.headingOffset';
 const PITCH_STORAGE_KEY = 'deriva360.pitch';
@@ -143,14 +144,29 @@ function showVideoLoading(title, msg) {
   if (titleEl && title) titleEl.textContent = title;
   if (msgEl && msg) msgEl.textContent = msg;
   spinner?.classList.remove('is-stopped');
+  videoLoading.classList.remove('is-ready', 'is-hiding');
+  if (videoLoadingOk) videoLoadingOk.hidden = true;
   videoLoading.hidden = false;
-  videoLoading.classList.remove('is-hiding');
   videoLoading.setAttribute('aria-busy', 'true');
+}
+
+/** Hide spinner/progress; keep tips until the user dismisses. */
+function showVideoInstructions() {
+  if (!videoLoading || videoLoading.hidden) return;
+  videoLoading.setAttribute('aria-busy', 'false');
+  videoLoading.classList.remove('is-hiding');
+  videoLoading.classList.add('is-ready');
+  if (videoLoadingOk) {
+    videoLoadingOk.hidden = false;
+    videoLoadingOk.focus();
+  }
 }
 
 function hideVideoLoading() {
   if (!videoLoading || videoLoading.hidden) return;
   videoLoading.setAttribute('aria-busy', 'false');
+  if (videoLoadingOk) videoLoadingOk.hidden = true;
+  videoLoading.classList.remove('is-ready');
   videoLoading.classList.add('is-hiding');
   const done = () => {
     videoLoading.hidden = true;
@@ -161,6 +177,10 @@ function hideVideoLoading() {
   // Fallback if transitionend doesn't fire (e.g. reduced motion / display none)
   window.setTimeout(done, 400);
 }
+
+videoLoadingOk?.addEventListener('click', () => {
+  hideVideoLoading();
+});
 
 function setPlayEnabled(enabled) {
   btnPlay.disabled = !enabled;
@@ -1027,7 +1047,7 @@ async function boot() {
 
   if (!active?.video) {
     setStatus('Active segment has no video');
-    hideVideoLoading();
+    showVideoInstructions();
     animate();
     return;
   }
@@ -1084,7 +1104,7 @@ async function boot() {
       tex.needsUpdate = true;
       setPlayEnabled(true);
       setStatus(`Press Play — ${active.id} (${active.distanceM} m)`);
-      hideVideoLoading();
+      showVideoInstructions();
     } catch (err) {
       setPlayEnabled(false);
       setStatus(err.message);
