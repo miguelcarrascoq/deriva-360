@@ -177,33 +177,33 @@ body {
 .controls {
   min-height: 0;
   overflow: auto;
-  padding: 14px 16px 18px;
+  padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
 }
 
 .playback {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: 4px;
+  padding: 6px 8px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 6px;
   background: #0f141b;
 }
 
 .playback-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 5px;
+  font-size: 11px;
 }
 
 .row.check {
@@ -218,175 +218,271 @@ body {
 
 .yaw-calib {
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 6px;
+  padding: 6px 8px;
   background: #0f141b;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
+}
+
+.yaw-calib-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .yaw-calib-head h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 650;
 }
 
 .yaw-calib-sub {
-  margin: 4px 0 0;
+  margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .yaw-calib-body {
   display: grid;
-  grid-template-columns: minmax(120px, 140px) 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(84px, 92px) 1fr;
+  gap: 6px;
   align-items: center;
 }
 
-.yaw-knob {
+.orient-pad {
   position: relative;
   width: 100%;
-  max-width: 140px;
+  max-width: 92px;
   aspect-ratio: 1;
   touch-action: none;
   user-select: none;
   cursor: grab;
   outline: none;
   margin: 0 auto;
-}
-
-.yaw-knob:focus-visible {
-  box-shadow: 0 0 0 2px var(--accent);
   border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 45%, #2a3340 0%, #171c24 72%),
+    conic-gradient(from 0deg, #3fb95022, transparent 35%, #58a6ff22, transparent 70%, #3fb95022);
+  border: 1px solid #3a4656;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 
-.yaw-knob.dragging {
+.orient-pad:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.orient-pad.dragging {
   cursor: grabbing;
 }
 
-.yaw-knob-dial {
+.orient-ring {
   position: absolute;
-  inset: 14px;
+  inset: 6px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 45%, #2a3340 0%, #171c24 70%),
-    conic-gradient(from 0deg, #3fb95033, transparent 40%, #58a6ff33, transparent 80%, #3fb95033);
-  border: 2px solid #3a4656;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.45);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
   transform: rotate(0deg);
+  pointer-events: none;
 }
 
-.yaw-knob-tick {
+.orient-tick {
   position: absolute;
   left: 50%;
-  top: 8px;
-  width: 4px;
-  height: 18px;
-  margin-left: -2px;
+  top: 1px;
+  width: 2px;
+  height: 9px;
+  margin-left: -1px;
   border-radius: 2px;
   background: var(--accent);
-  box-shadow: 0 0 8px rgba(63, 185, 80, 0.55);
+  box-shadow: 0 0 6px rgba(63, 185, 80, 0.55);
 }
 
-.yaw-knob-center {
+.orient-horizon {
   position: absolute;
-  inset: 28px;
-  border-radius: 50%;
-  background: #0c1016;
-  border: 1px solid #30363d;
-  display: grid;
-  place-items: center;
+  left: 12%;
+  right: 12%;
+  top: 50%;
+  height: 0;
+  border-top: 1px solid rgba(88, 166, 255, 0.85);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
-.yaw-knob-center span {
-  font-size: 22px;
+.orient-cross {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
+}
+
+.orient-center {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: rgba(12, 16, 22, 0.92);
+  border: 1px solid #30363d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  pointer-events: none;
+}
+
+.orient-center span {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
-.yaw-knob-labels {
+#orient-yaw-val {
+  font-size: 11px;
+  color: var(--accent);
+}
+
+#orient-pitch-val {
+  font-size: 10px;
+  color: #58a6ff;
+}
+
+.orient-labels {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
 }
 
-.yaw-knob-labels .n {
+.orient-labels .n {
   position: absolute;
-  top: 0;
+  top: 2px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.yaw-knob-labels .e {
+.orient-labels .e {
   position: absolute;
-  right: 0;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
 }
 
-.yaw-knob-labels .s {
+.orient-labels .s {
   position: absolute;
-  bottom: 0;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.yaw-knob-labels .w {
+.orient-labels .w {
   position: absolute;
-  left: 0;
+  left: 4px;
   top: 50%;
   transform: translateY(-50%);
+}
+
+.orient-labels .up {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  opacity: 0.75;
+}
+
+.orient-labels .down {
+  position: absolute;
+  bottom: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  opacity: 0.75;
 }
 
 .yaw-calib-side {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 3px;
   min-width: 0;
 }
 
 .yaw-num-label {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--muted);
+  margin: 0;
+  line-height: 1.1;
 }
 
-#heading-offset-num {
+#heading-offset-num,
+#pitch-num {
   width: 100%;
   background: #0c1016;
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 18px;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 12px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
-#heading-offset {
+#heading-offset,
+#pitch-range {
   width: 100%;
+  height: 14px;
+}
+
+.pitch-row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 4px;
+  align-items: center;
+}
+
+#pitch-reset {
+  background: #21262d;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#pitch-reset:hover {
+  border-color: #58a6ff;
+  color: #58a6ff;
 }
 
 .yaw-presets {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 2px;
 }
 
 .yaw-presets button {
-  flex: 1 1 auto;
-  min-width: 44px;
+  flex: 1 1 0;
+  min-width: 0;
   background: #21262d;
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 12px;
+  border-radius: 4px;
+  padding: 2px 2px;
+  font-size: 10px;
+  line-height: 1.2;
   cursor: pointer;
 }
 
@@ -396,14 +492,20 @@ body {
   color: var(--accent);
 }
 
+@media (max-width: 640px) {
+  .pitch-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 #btn-play {
   background: var(--accent);
   color: #04140a;
   border: 0;
-  border-radius: 8px;
-  padding: 12px 20px;
-  min-width: 96px;
-  font-size: 15px;
+  border-radius: 5px;
+  padding: 4px 10px;
+  min-width: 52px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
@@ -416,17 +518,17 @@ body {
 #clock {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-width: 96px;
+  min-width: 64px;
   text-align: right;
-  font-size: 14px;
+  font-size: 11px;
   flex-shrink: 0;
 }
 
 .hint {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 10px;
+  line-height: 1.25;
 }
 
 .maplibregl-popup-content {
@@ -497,7 +599,7 @@ body {
     border-top: 0;
     border-left: 1px solid var(--border);
     /* Still stacked inside until panel is wide enough */
-    grid-template-rows: minmax(220px, 42%) minmax(0, 1fr);
+    grid-template-rows: minmax(180px, 36%) minmax(0, 1fr);
   }
 
   #map-panel {
@@ -508,11 +610,11 @@ body {
 /* Wide: map + controls on one row inside the panel */
 @media (min-width: 1200px) {
   #app {
-    grid-template-columns: minmax(0, 1.5fr) minmax(640px, 1fr);
+    grid-template-columns: minmax(0, 1.5fr) minmax(560px, 1fr);
   }
 
   #sidebar {
-    grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.05fr);
+    grid-template-columns: minmax(240px, 1fr) minmax(280px, 1fr);
     grid-template-rows: 1fr;
   }
 
@@ -523,7 +625,7 @@ body {
   }
 
   .controls {
-    padding: 16px 18px 20px;
+    padding: 6px 8px 8px;
   }
 }
 

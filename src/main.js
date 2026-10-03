@@ -14,20 +14,29 @@ const telTime = document.getElementById('tel-time');
 const telSpeed = document.getElementById('tel-speed');
 const telEle = document.getElementById('tel-ele');
 const telBearing = document.getElementById('tel-bearing');
+const telPitch = document.getElementById('tel-pitch');
 const btnPlay = document.getElementById('btn-play');
 const seek = document.getElementById('seek');
 const clock = document.getElementById('clock');
 const alignHeading = document.getElementById('align-heading');
 const headingOffset = document.getElementById('heading-offset');
 const headingOffsetNum = document.getElementById('heading-offset-num');
-const headingOffsetVal = document.getElementById('heading-offset-val');
-const yawKnob = document.getElementById('yaw-knob');
-const yawKnobDial = document.getElementById('yaw-knob-dial');
+const orientPad = document.getElementById('orient-pad');
+const orientRing = document.getElementById('orient-ring');
+const orientHorizon = document.getElementById('orient-horizon');
+const orientYawVal = document.getElementById('orient-yaw-val');
+const orientPitchVal = document.getElementById('orient-pitch-val');
+const pitchNum = document.getElementById('pitch-num');
+const pitchRange = document.getElementById('pitch-range');
+const pitchReset = document.getElementById('pitch-reset');
 const yawPresetButtons = document.querySelectorAll('.yaw-presets button[data-yaw]');
 const video = document.getElementById('video');
 const canvas = document.getElementById('sphere');
 
 const OFFSET_STORAGE_KEY = 'deriva360.headingOffset';
+const PITCH_STORAGE_KEY = 'deriva360.pitch';
+const PITCH_MIN = -85;
+const PITCH_MAX = 85;
 
 function clampOffset(value) {
   let n = Number(value);
@@ -38,8 +47,35 @@ function clampOffset(value) {
   return Math.round(n);
 }
 
+function clampPitch(value) {
+  let n = Number(value);
+  if (!Number.isFinite(n)) n = 0;
+  return Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.round(n)));
+}
+
 function getHeadingOffset() {
   return clampOffset(headingOffset.value);
+}
+
+function getPitch() {
+  return clampPitch(lat);
+}
+
+function formatSignedDeg(n) {
+  return `${n > 0 ? '+' : ''}${n}°`;
+}
+
+function updateOrientPad() {
+  const yaw = getHeadingOffset();
+  const pitch = getPitch();
+  orientRing.style.transform = `rotate(${yaw}deg)`;
+  // Pitch shifts the horizon: +pitch (look up) moves horizon down in view → marker up.
+  const t = pitch / PITCH_MAX; // -1..1
+  const topPct = 50 - t * 34;
+  orientHorizon.style.top = `${topPct}%`;
+  orientYawVal.textContent = formatSignedDeg(yaw);
+  orientPitchVal.textContent = formatSignedDeg(pitch);
+  if (telPitch) telPitch.textContent = `pitch ${formatSignedDeg(pitch)}`;
 }
 
 function formatTime(sec) {
@@ -120,8 +156,8 @@ function resizeViewer() {
 }
 
 function applyLook() {
-  lat = Math.max(-85, Math.min(85, lat));
-  // Offset calibrates video "forward" vs GPS; always applied so the knob
+  lat = clampPitch(lat);
+  // Offset calibrates video "forward" vs GPS; always applied so the pad
   // rotates the world immediately without needing align-heading.
   const yaw = lon + getHeadingOffset();
   const phi = THREE.MathUtils.degToRad(90 - lat);
@@ -134,14 +170,10 @@ function applyLook() {
   camera.lookAt(target);
 }
 
-function setHeadingOffset(value, { persist = true } = {}) {
+function setHeadingOffset(value, { persist = true, sync = true } = {}) {
   const n = clampOffset(value);
   headingOffset.value = String(n);
   headingOffsetNum.value = String(n);
-  const label = `${n > 0 ? '+' : ''}${n}°`;
-  headingOffsetVal.textContent = label;
-  yawKnobDial.style.transform = `rotate(${n}deg)`;
-  yawKnob.setAttribute('aria-valuenow', String(n));
   for (const btn of yawPresetButtons) {
     btn.classList.toggle('active', Number(btn.dataset.yaw) === n);
   }
@@ -152,57 +184,81 @@ function setHeadingOffset(value, { persist = true } = {}) {
       /* ignore quota / private mode */
     }
   }
-  syncUiFromVideo();
+  updateOrientPad();
+  if (sync) syncUiFromVideo();
 }
 
-function angleFromKnobPointer(clientX, clientY) {
-  const rect = yawKnob.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  // 0° at top, clockwise positive to match compass-ish mental model
-  const rad = Math.atan2(clientX - cx, cy - clientY);
-  return clampOffset((rad * 180) / Math.PI);
+function setPitch(value, { persist = true } = {}) {
+  lat = clampPitch(value);
+  pitchNum.value = String(lat);
+  pitchRange.value = String(lat);
+  if (persist) {
+    try {
+      localStorage.setItem(PITCH_STORAGE_KEY, String(lat));
+    } catch {
+      /* ignore */
+    }
+  }
+  updateOrientPad();
 }
 
-let knobDragging = false;
+let padDragging = false;
+let padPrevX = 0;
+let padPrevY = 0;
 
-yawKnob.addEventListener('pointerdown', (e) => {
-  knobDragging = true;
-  yawKnob.classList.add('dragging');
-  yawKnob.setPointerCapture(e.pointerId);
-  setHeadingOffset(angleFromKnobPointer(e.clientX, e.clientY));
+orientPad.addEventListener('pointerdown', (e) => {
+  padDragging = true;
+  orientPad.classList.add('dragging');
+  orientPad.setPointerCapture(e.pointerId);
+  padPrevX = e.clientX;
+  padPrevY = e.clientY;
 });
 
-yawKnob.addEventListener('pointermove', (e) => {
-  if (!knobDragging) return;
-  setHeadingOffset(angleFromKnobPointer(e.clientX, e.clientY));
+orientPad.addEventListener('pointermove', (e) => {
+  if (!padDragging) return;
+  const dx = e.clientX - padPrevX;
+  const dy = e.clientY - padPrevY;
+  padPrevX = e.clientX;
+  padPrevY = e.clientY;
+  // Pad always edits calibration (yaw offset + pitch), even with Align on.
+  setHeadingOffset(getHeadingOffset() - dx * 0.35, { persist: false, sync: false });
+  setPitch(getPitch() - dy * 0.25, { persist: false });
 });
 
-function endKnobDrag(e) {
-  if (!knobDragging) return;
-  knobDragging = false;
-  yawKnob.classList.remove('dragging');
+function endPadDrag(e) {
+  if (!padDragging) return;
+  padDragging = false;
+  orientPad.classList.remove('dragging');
   try {
-    yawKnob.releasePointerCapture(e.pointerId);
+    orientPad.releasePointerCapture(e.pointerId);
   } catch {
     /* ignore */
   }
+  setHeadingOffset(getHeadingOffset(), { persist: true, sync: false });
+  setPitch(getPitch(), { persist: true });
 }
 
-yawKnob.addEventListener('pointerup', endKnobDrag);
-yawKnob.addEventListener('pointercancel', endKnobDrag);
+orientPad.addEventListener('pointerup', endPadDrag);
+orientPad.addEventListener('pointercancel', endPadDrag);
 
-yawKnob.addEventListener('keydown', (e) => {
+orientPad.addEventListener('keydown', (e) => {
   const step = e.shiftKey ? 10 : 1;
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+  if (e.key === 'ArrowLeft') {
     e.preventDefault();
     setHeadingOffset(getHeadingOffset() - step);
-  } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+  } else if (e.key === 'ArrowRight') {
     e.preventDefault();
     setHeadingOffset(getHeadingOffset() + step);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    setPitch(getPitch() + step);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    setPitch(getPitch() - step);
   } else if (e.key === 'Home') {
     e.preventDefault();
     setHeadingOffset(0);
+    setPitch(0);
   }
 });
 
@@ -217,6 +273,27 @@ headingOffsetNum.addEventListener('change', () => {
 headingOffsetNum.addEventListener('input', () => {
   const n = Number(headingOffsetNum.value);
   if (Number.isFinite(n)) setHeadingOffset(n, { persist: false });
+});
+
+pitchRange.addEventListener('input', () => {
+  setPitch(pitchRange.value, { persist: false });
+});
+
+pitchRange.addEventListener('change', () => {
+  setPitch(pitchRange.value, { persist: true });
+});
+
+pitchNum.addEventListener('change', () => {
+  setPitch(pitchNum.value);
+});
+
+pitchNum.addEventListener('input', () => {
+  const n = Number(pitchNum.value);
+  if (Number.isFinite(n)) setPitch(n, { persist: false });
+});
+
+pitchReset.addEventListener('click', () => {
+  setPitch(0);
 });
 
 for (const btn of yawPresetButtons) {
@@ -240,13 +317,13 @@ canvas.addEventListener('pointermove', (e) => {
   prevX = e.clientX;
   prevY = e.clientY;
   if (alignHeading.checked) {
-    // Temporary look relative to GPS heading — do not corrupt calibration offset.
+    // Temporary look relative to GPS heading — do not corrupt calibration yaw.
     lon -= dx * 0.15;
   } else {
-    // Horizontal drag rotates the video and keeps the heading-offset UI in sync.
-    setHeadingOffset(getHeadingOffset() - dx * 0.15, { persist: false });
+    setHeadingOffset(getHeadingOffset() - dx * 0.15, { persist: false, sync: false });
   }
-  lat += dy * 0.15;
+  // Vertical drag updates pitch (same sign as before: drag down → look up).
+  setPitch(getPitch() + dy * 0.15, { persist: false });
 });
 
 function endDrag(e) {
@@ -259,9 +336,9 @@ function endDrag(e) {
     /* ignore */
   }
   if (!alignHeading.checked) {
-    // Persist the offset chosen by dragging the sphere.
-    setHeadingOffset(getHeadingOffset(), { persist: true });
+    setHeadingOffset(getHeadingOffset(), { persist: true, sync: false });
   }
+  setPitch(getPitch(), { persist: true });
 }
 
 alignHeading.addEventListener('change', () => {
@@ -680,12 +757,14 @@ function updateTelemetry(sample) {
   telSpeed.textContent = `${(sample.speed * 3.6).toFixed(1)} km/h`;
   telEle.textContent = `${(sample.ele ?? 0).toFixed(0)} m`;
   const offset = getHeadingOffset();
-  const offLabel = `${offset > 0 ? '+' : ''}${offset}°`;
+  const offLabel = formatSignedDeg(offset);
   telBearing.textContent = `heading ${sample.bearing.toFixed(0)}° · off ${offLabel}`;
+  if (telPitch) telPitch.textContent = `pitch ${formatSignedDeg(getPitch())}`;
   marker.setLngLat([sample.lon, sample.lat]);
   arrow.setLngLat([sample.lon, sample.lat]);
   // Map arrow = true travel direction (GPS). Video offset is visual calibration only.
   arrow.setRotation(sample.bearing);
+  updateOrientPad();
 
   if (alignHeading.checked && !isDragging) {
     // Keep facing travel direction. Offset (calibration) is applied in applyLook().
@@ -767,13 +846,17 @@ async function boot() {
     routeData.segments[0];
 
   let initialOffset = routeData.headingOffsetDefault ?? 180;
+  let initialPitch = routeData.pitchDefault ?? -13;
   try {
     const saved = localStorage.getItem(OFFSET_STORAGE_KEY);
     if (saved != null && saved !== '') initialOffset = saved;
+    const savedPitch = localStorage.getItem(PITCH_STORAGE_KEY);
+    if (savedPitch != null && savedPitch !== '') initialPitch = savedPitch;
   } catch {
     /* ignore */
   }
-  setHeadingOffset(initialOffset, { persist: false });
+  setHeadingOffset(initialOffset, { persist: false, sync: false });
+  setPitch(initialPitch, { persist: false });
 
   ensureRoutesOnMap({ fit: true });
 

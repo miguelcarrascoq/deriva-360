@@ -17,6 +17,7 @@
             <span id="tel-speed">— km/h</span>
             <span id="tel-ele">— m</span>
             <span id="tel-bearing">heading —°</span>
+            <span id="tel-pitch">pitch —°</span>
           </div>
         </div>
       </div>
@@ -73,39 +74,40 @@
               <span id="clock">0:00 / 0:00</span>
             </div>
           </div>
-          <section class="yaw-calib" aria-label="Video heading calibration">
+          <section class="yaw-calib" aria-label="Look orientation">
             <div class="yaw-calib-head">
-              <h2>Heading offset</h2>
-              <p class="yaw-calib-sub">
-                Turn the knob until the video’s forward direction faces ahead
-              </p>
+              <h2>Look orientation</h2>
+              <p class="yaw-calib-sub">yaw ↔ · pitch ↕</p>
             </div>
             <div class="yaw-calib-body">
               <div
-                id="yaw-knob"
-                class="yaw-knob"
-                role="slider"
+                id="orient-pad"
+                class="orient-pad"
+                role="group"
                 tabindex="0"
-                aria-valuemin="-180"
-                aria-valuemax="180"
-                aria-valuenow="180"
-                aria-label="Heading offset in degrees"
+                aria-label="Look orientation pad"
               >
-                <div class="yaw-knob-dial" id="yaw-knob-dial">
-                  <div class="yaw-knob-tick"></div>
-                  <div class="yaw-knob-center">
-                    <span id="heading-offset-val">+180°</span>
-                  </div>
+                <div class="orient-ring" id="orient-ring">
+                  <div class="orient-tick"></div>
                 </div>
-                <div class="yaw-knob-labels" aria-hidden="true">
+                <div class="orient-horizon" id="orient-horizon">
+                  <span class="orient-cross"></span>
+                </div>
+                <div class="orient-center">
+                  <span id="orient-yaw-val">+180°</span>
+                  <span id="orient-pitch-val">-13°</span>
+                </div>
+                <div class="orient-labels" aria-hidden="true">
                   <span class="n">0</span>
                   <span class="e">+90</span>
                   <span class="s">±180</span>
                   <span class="w">-90</span>
+                  <span class="up">Up</span>
+                  <span class="down">Down</span>
                 </div>
               </div>
               <div class="yaw-calib-side">
-                <label class="yaw-num-label" for="heading-offset-num">Degrees</label>
+                <label class="yaw-num-label" for="heading-offset-num">Yaw</label>
                 <input
                   id="heading-offset-num"
                   type="number"
@@ -129,22 +131,37 @@
                   <button type="button" data-yaw="90">+90</button>
                   <button type="button" data-yaw="180">+180</button>
                 </div>
+                <label class="yaw-num-label" for="pitch-num">Pitch</label>
+                <div class="pitch-row">
+                  <input
+                    id="pitch-num"
+                    type="number"
+                    min="-85"
+                    max="85"
+                    step="1"
+                    value="-13"
+                  />
+                  <input
+                    id="pitch-range"
+                    type="range"
+                    min="-85"
+                    max="85"
+                    value="-13"
+                    step="1"
+                  />
+                  <button type="button" id="pitch-reset">Pitch 0</button>
+                </div>
               </div>
             </div>
-            <label class="row check">
+            <label
+              class="row check"
+              title="Follows travel direction. Yaw/pitch calibration is unchanged by video drag."
+            >
               <input id="align-heading" type="checkbox" />
-              Align view with GPS heading
+              Align to GPS heading
             </label>
-            <p class="yaw-calib-sub">
-              When on, the view follows travel direction. Heading offset stays as
-              calibration and is not changed by dragging.
-            </p>
           </section>
-          <p class="hint">
-            Drag the sphere horizontally to rotate the video — the heading offset
-            updates live. Pitch with vertical drag. Click the green segment 005
-            polyline to seek.
-          </p>
+          <p class="hint">Click green track 005 to seek.</p>
         </div>
       </aside>
     </div>

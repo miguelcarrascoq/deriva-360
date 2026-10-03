@@ -167,6 +167,7 @@ const payload = {
   sourceDir: pedazos,
   activeSegmentId: active.id,
   headingOffsetDefault: 180,
+  pitchDefault: -13,
   segments,
 };
 
