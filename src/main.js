@@ -239,8 +239,13 @@ canvas.addEventListener('pointermove', (e) => {
   const dy = e.clientY - prevY;
   prevX = e.clientX;
   prevY = e.clientY;
-  // Horizontal drag rotates the video and keeps the heading-offset UI in sync.
-  setHeadingOffset(getHeadingOffset() - dx * 0.15, { persist: false });
+  if (alignHeading.checked) {
+    // Temporary look relative to GPS heading — do not corrupt calibration offset.
+    lon -= dx * 0.15;
+  } else {
+    // Horizontal drag rotates the video and keeps the heading-offset UI in sync.
+    setHeadingOffset(getHeadingOffset() - dx * 0.15, { persist: false });
+  }
   lat += dy * 0.15;
 });
 
@@ -253,9 +258,25 @@ function endDrag(e) {
   } catch {
     /* ignore */
   }
-  // Persist the offset chosen by dragging the sphere.
-  setHeadingOffset(getHeadingOffset(), { persist: true });
+  if (!alignHeading.checked) {
+    // Persist the offset chosen by dragging the sphere.
+    setHeadingOffset(getHeadingOffset(), { persist: true });
+  }
 }
+
+alignHeading.addEventListener('change', () => {
+  if (alignHeading.checked) {
+    // Snap look to current GPS bearing; offset stays as video calibration.
+    if (active) {
+      const sample = sampleAt(active.points, video.currentTime || 0);
+      if (sample) lon = -sample.bearing;
+    }
+  } else {
+    // Restore calibration-only view. Leaving lon at -bearing was shifting
+    // the image while the degrees UI still showed the old offset.
+    lon = 0;
+  }
+});
 
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
@@ -667,7 +688,7 @@ function updateTelemetry(sample) {
   arrow.setRotation(sample.bearing);
 
   if (alignHeading.checked && !isDragging) {
-    // Offset is applied in applyLook(); here lon tracks GPS bearing only.
+    // Keep facing travel direction. Offset (calibration) is applied in applyLook().
     lon = -sample.bearing;
   }
 }
