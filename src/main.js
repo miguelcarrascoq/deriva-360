@@ -1098,7 +1098,7 @@ async function boot() {
       await waitForVideoReady(video);
       tex.needsUpdate = true;
       setPlayEnabled(true);
-      setStatus(`Ready — ${active.id} (${active.distanceM} m)`);
+      setStatus(`Press Play — ${active.id} (${active.distanceM} m)`);
       hideVideoLoading();
     } catch (err) {
       setPlayEnabled(false);
