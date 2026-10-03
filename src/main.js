@@ -164,7 +164,7 @@ function hideVideoLoading() {
 
 function setPlayEnabled(enabled) {
   btnPlay.disabled = !enabled;
-  btnPlay.title = enabled ? '' : 'Esperá a que cargue el video';
+  btnPlay.title = enabled ? '' : 'Wait for the video to load';
 }
 
 function getBufferedRatio(el) {
@@ -188,7 +188,7 @@ function isVideoPlayable(el) {
 function updateVideoLoadProgress(el) {
   const pct = Math.round(getBufferedRatio(el) * 100);
   setStatus(`Loading video… ${pct}%`);
-  showVideoLoading('Cargando video 360°', `Descargando… ${pct}%`);
+  showVideoLoading('Loading 360° video', `Downloading… ${pct}%`);
 }
 
 function waitForVideoReady(el) {
@@ -1003,13 +1003,13 @@ function animate() {
 async function boot() {
   setStatus('Loading route.json…');
   showVideoLoading(
-    'Cargando recorrido…',
-    'Preparando mapa y video 360°…',
+    'Loading route…',
+    'Preparing map and 360° video…',
   );
   const res = await fetch(assetUrl('route.json'));
   if (!res.ok) {
     setStatus('Missing route.json — run npm run route');
-    showVideoLoading('Falta route.json', 'Ejecutá npm run route y recargá.');
+    showVideoLoading('Missing route.json', 'Run npm run route and reload.');
     videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
     return;
   }
@@ -1049,8 +1049,8 @@ async function boot() {
 
   setStatus('Loading video proxy…');
   showVideoLoading(
-    'Cargando video 360°',
-    'El archivo es pesado; esto puede tardar unos segundos…',
+    'Loading 360° video',
+    'The file is large; this may take a few seconds…',
   );
   video.src = assetUrl(active.video);
   video.load();
@@ -1072,7 +1072,7 @@ async function boot() {
     video.addEventListener('error', onErr);
   }).catch((err) => {
     setStatus(err.message);
-    showVideoLoading('No se pudo cargar el video', err.message);
+    showVideoLoading('Could not load video', err.message);
     videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
   });
 
@@ -1103,7 +1103,7 @@ async function boot() {
     } catch (err) {
       setPlayEnabled(false);
       setStatus(err.message);
-      showVideoLoading('No se pudo cargar el video', err.message);
+      showVideoLoading('Could not load video', err.message);
       videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
     }
   }
@@ -1117,6 +1117,6 @@ async function boot() {
 boot().catch((err) => {
   console.error(err);
   setStatus(err.message || String(err));
-  showVideoLoading('Error al iniciar', err.message || String(err));
+  showVideoLoading('Startup error', err.message || String(err));
   videoLoading?.querySelector('.video-loading-spinner')?.classList.add('is-stopped');
 });
