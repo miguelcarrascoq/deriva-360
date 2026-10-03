@@ -15,6 +15,7 @@ const telSpeed = document.getElementById('tel-speed');
 const telEle = document.getElementById('tel-ele');
 const telBearing = document.getElementById('tel-bearing');
 const telPitch = document.getElementById('tel-pitch');
+const telZoom = document.getElementById('tel-zoom');
 const btnPlay = document.getElementById('btn-play');
 const seek = document.getElementById('seek');
 const clock = document.getElementById('clock');
@@ -29,14 +30,23 @@ const orientPitchVal = document.getElementById('orient-pitch-val');
 const pitchNum = document.getElementById('pitch-num');
 const pitchRange = document.getElementById('pitch-range');
 const pitchReset = document.getElementById('pitch-reset');
+const zoomRange = document.getElementById('zoom-range');
+const zoomInBtn = document.getElementById('zoom-in');
+const zoomOutBtn = document.getElementById('zoom-out');
+const zoomReset = document.getElementById('zoom-reset');
 const yawPresetButtons = document.querySelectorAll('.yaw-presets button[data-yaw]');
 const video = document.getElementById('video');
 const canvas = document.getElementById('sphere');
 
 const OFFSET_STORAGE_KEY = 'deriva360.headingOffset';
 const PITCH_STORAGE_KEY = 'deriva360.pitch';
+const FOV_STORAGE_KEY = 'deriva360.fov';
 const PITCH_MIN = -85;
 const PITCH_MAX = 85;
+const FOV_MIN = 40;
+const FOV_MAX = 100;
+const FOV_DEFAULT = 75;
+const ZOOM_STEP = 5;
 
 function clampOffset(value) {
   let n = Number(value);
@@ -202,6 +212,40 @@ function setPitch(value, { persist = true } = {}) {
   updateOrientPad();
 }
 
+function clampFov(value) {
+  let n = Number(value);
+  if (!Number.isFinite(n)) n = FOV_DEFAULT;
+  return Math.max(FOV_MIN, Math.min(FOV_MAX, Math.round(n)));
+}
+
+/** Zoom UI level: 0 = widest (FOV 100), 60 = tightest (FOV 40). */
+function zoomLevelFromFov(fov) {
+  return FOV_MAX - clampFov(fov);
+}
+
+function fovFromZoomLevel(level) {
+  return clampFov(FOV_MAX - Number(level));
+}
+
+function getFov() {
+  return clampFov(camera.fov);
+}
+
+function setFov(value, { persist = true } = {}) {
+  const fov = clampFov(value);
+  camera.fov = fov;
+  camera.updateProjectionMatrix();
+  zoomRange.value = String(zoomLevelFromFov(fov));
+  if (telZoom) telZoom.textContent = `zoom ${fov}°`;
+  if (persist) {
+    try {
+      localStorage.setItem(FOV_STORAGE_KEY, String(fov));
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 let padDragging = false;
 let padPrevX = 0;
 let padPrevY = 0;
@@ -296,6 +340,26 @@ pitchReset.addEventListener('click', () => {
   setPitch(0);
 });
 
+zoomRange.addEventListener('input', () => {
+  setFov(fovFromZoomLevel(zoomRange.value), { persist: false });
+});
+
+zoomRange.addEventListener('change', () => {
+  setFov(fovFromZoomLevel(zoomRange.value), { persist: true });
+});
+
+zoomInBtn.addEventListener('click', () => {
+  setFov(getFov() - ZOOM_STEP);
+});
+
+zoomOutBtn.addEventListener('click', () => {
+  setFov(getFov() + ZOOM_STEP);
+});
+
+zoomReset.addEventListener('click', () => {
+  setFov(FOV_DEFAULT);
+});
+
 for (const btn of yawPresetButtons) {
   btn.addEventListener('click', () => {
     setHeadingOffset(btn.dataset.yaw);
@@ -358,12 +422,16 @@ alignHeading.addEventListener('change', () => {
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
+let fovPersistTimer = 0;
 canvas.addEventListener(
   'wheel',
   (e) => {
     e.preventDefault();
-    camera.fov = Math.max(40, Math.min(100, camera.fov + e.deltaY * 0.05));
-    camera.updateProjectionMatrix();
+    setFov(getFov() + e.deltaY * 0.05, { persist: false });
+    window.clearTimeout(fovPersistTimer);
+    fovPersistTimer = window.setTimeout(() => {
+      setFov(getFov(), { persist: true });
+    }, 200);
   },
   { passive: false },
 );
@@ -847,16 +915,20 @@ async function boot() {
 
   let initialOffset = routeData.headingOffsetDefault ?? 180;
   let initialPitch = routeData.pitchDefault ?? -13;
+  let initialFov = FOV_DEFAULT;
   try {
     const saved = localStorage.getItem(OFFSET_STORAGE_KEY);
     if (saved != null && saved !== '') initialOffset = saved;
     const savedPitch = localStorage.getItem(PITCH_STORAGE_KEY);
     if (savedPitch != null && savedPitch !== '') initialPitch = savedPitch;
+    const savedFov = localStorage.getItem(FOV_STORAGE_KEY);
+    if (savedFov != null && savedFov !== '') initialFov = savedFov;
   } catch {
     /* ignore */
   }
   setHeadingOffset(initialOffset, { persist: false, sync: false });
   setPitch(initialPitch, { persist: false });
+  setFov(initialFov, { persist: false });
 
   ensureRoutesOnMap({ fit: true });
 
