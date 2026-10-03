@@ -1,0 +1,24 @@
+{
+  "name": "deriva-360",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "route": "node scripts/build-route.mjs",
+    "proxy": "node scripts/make-proxy.mjs",
+    "prepare-data": "npm run route && npm run proxy"
+  },
+  "dependencies": {
+    "maplibre-gl": "^5.6.0",
+    "three": "^0.179.1"
+  },
+  "devDependencies": {
+    "vite": "^7.1.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

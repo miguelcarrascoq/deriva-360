@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deriva 360 — MVP</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="viewer">
+        <canvas id="sphere"></canvas>
+        <div id="hud">
+          <div id="status">Loading…</div>
+          <div id="telemetry">
+            <span id="tel-time">t —</span>
+            <span id="tel-speed">— km/h</span>
+            <span id="tel-ele">— m</span>
+            <span id="tel-bearing">heading —°</span>
+          </div>
+        </div>
+      </div>
+      <aside id="sidebar">
+        <div id="map-panel">
+          <div id="map"></div>
+          <div class="basemap-switcher">
+            <button
+              type="button"
+              id="basemap-toggle"
+              class="basemap-toggle"
+              aria-label="Map layers"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-controls="basemap-menu"
+              title="Map layers"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 2 2 7l10 5 10-5-10-5Zm0 9.5L4.2 8.1 2 9.2l10 5 10-5-2.2-1.1L12 11.5Zm0 4L4.2 12.1 2 13.2l10 5 10-5-2.2-1.1L12 15.5Z"
+                />
+              </svg>
+            </button>
+            <div
+              id="basemap-menu"
+              class="basemap-menu"
+              role="radiogroup"
+              aria-label="Map basemap"
+              hidden
+            >
+              <button type="button" class="basemap-btn" data-basemap="streets">
+                Streets
+              </button>
+              <button type="button" class="basemap-btn" data-basemap="satellite">
+                Satellite
+              </button>
+              <button
+                type="button"
+                class="basemap-btn active"
+                data-basemap="hybrid"
+                aria-checked="true"
+              >
+                Hybrid
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="playback">
+            <div class="playback-row">
+              <button id="btn-play" type="button">Play</button>
+              <input id="seek" type="range" min="0" max="1000" value="0" step="1" />
+              <span id="clock">0:00 / 0:00</span>
+            </div>
+          </div>
+          <section class="yaw-calib" aria-label="Video heading calibration">
+            <div class="yaw-calib-head">
+              <h2>Heading offset</h2>
+              <p class="yaw-calib-sub">
+                Turn the knob until the video’s forward direction faces ahead
+              </p>
+            </div>
+            <div class="yaw-calib-body">
+              <div
+                id="yaw-knob"
+                class="yaw-knob"
+                role="slider"
+                tabindex="0"
+                aria-valuemin="-180"
+                aria-valuemax="180"
+                aria-valuenow="180"
+                aria-label="Heading offset in degrees"
+              >
+                <div class="yaw-knob-dial" id="yaw-knob-dial">
+                  <div class="yaw-knob-tick"></div>
+                  <div class="yaw-knob-center">
+                    <span id="heading-offset-val">+180°</span>
+                  </div>
+                </div>
+                <div class="yaw-knob-labels" aria-hidden="true">
+                  <span class="n">0</span>
+                  <span class="e">+90</span>
+                  <span class="s">±180</span>
+                  <span class="w">-90</span>
+                </div>
+              </div>
+              <div class="yaw-calib-side">
+                <label class="yaw-num-label" for="heading-offset-num">Degrees</label>
+                <input
+                  id="heading-offset-num"
+                  type="number"
+                  min="-180"
+                  max="180"
+                  step="1"
+                  value="180"
+                />
+                <input
+                  id="heading-offset"
+                  type="range"
+                  min="-180"
+                  max="180"
+                  value="180"
+                  step="1"
+                />
+                <div class="yaw-presets">
+                  <button type="button" data-yaw="-180">-180</button>
+                  <button type="button" data-yaw="-90">-90</button>
+                  <button type="button" data-yaw="0">0</button>
+                  <button type="button" data-yaw="90">+90</button>
+                  <button type="button" data-yaw="180">+180</button>
+                </div>
+              </div>
+            </div>
+            <label class="row check">
+              <input id="align-heading" type="checkbox" />
+              Align view with GPS heading
+            </label>
+          </section>
+          <p class="hint">
+            Drag the sphere horizontally to rotate the video — the heading offset
+            updates live. Pitch with vertical drag. Click the green segment 005
+            polyline to seek.
+          </p>
+        </div>
+      </aside>
+    </div>
+    <video id="video" playsinline crossorigin="anonymous" style="display: none"></video>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.*
+
+# Keep the web proxy committed for GitHub Pages; ignore other local media.
+public/media/*
+!public/media/005-proxy.mp4
