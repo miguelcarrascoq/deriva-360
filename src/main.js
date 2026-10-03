@@ -716,26 +716,27 @@ document.addEventListener('keydown', (e) => {
 syncBasemapButtons();
 setBasemapMenuOpen(false);
 
-const markerEl = document.createElement('div');
-markerEl.style.width = '14px';
-markerEl.style.height = '14px';
-markerEl.style.borderRadius = '50%';
-markerEl.style.background = '#ff4d4f';
-markerEl.style.border = '2px solid #fff';
-markerEl.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.35)';
-const marker = new maplibregl.Marker({ element: markerEl, rotationAlignment: 'map' });
+/** Position + GPS travel heading. Tip = north at rotation 0° (MapLibre map alignment). */
+function createTrackMarkerEl() {
+  const el = document.createElement('div');
+  el.className = 'track-marker';
+  el.innerHTML = `
+    <svg class="track-marker-svg" viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+      <path
+        class="track-marker-heading"
+        d="M28 2 L47 30 L28 23 L9 30 Z"
+        stroke-linejoin="round"
+      />
+      <circle class="track-marker-dot" cx="28" cy="28" r="10" />
+    </svg>
+  `;
+  return el;
+}
 
-const arrowEl = document.createElement('div');
-arrowEl.style.width = '0';
-arrowEl.style.height = '0';
-arrowEl.style.borderLeft = '7px solid transparent';
-arrowEl.style.borderRight = '7px solid transparent';
-arrowEl.style.borderBottom = '16px solid #3fb950';
-arrowEl.style.filter = 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))';
-const arrow = new maplibregl.Marker({
-  element: arrowEl,
+const trackMarker = new maplibregl.Marker({
+  element: createTrackMarkerEl(),
   rotationAlignment: 'map',
-  pitchAlignment: 'map',
+  pitchAlignment: 'viewport',
 });
 
 let routeData = null;
@@ -854,8 +855,7 @@ function addTrackLayers() {
 
 function placeTrackMarkers() {
   const p0 = active.points[0];
-  marker.setLngLat([p0.lon, p0.lat]).addTo(map);
-  arrow.setLngLat([p0.lon, p0.lat]).addTo(map);
+  trackMarker.setLngLat([p0.lon, p0.lat]).setRotation(p0.bearing ?? 0).addTo(map);
 }
 
 function addRoutesToMap({ fit = false } = {}) {
@@ -927,10 +927,9 @@ function updateTelemetry(sample) {
   const offLabel = formatSignedDeg(offset);
   telBearing.textContent = `heading ${sample.bearing.toFixed(0)}° · off ${offLabel}`;
   if (telPitch) telPitch.textContent = `pitch ${formatSignedDeg(getPitch())}`;
-  marker.setLngLat([sample.lon, sample.lat]);
-  arrow.setLngLat([sample.lon, sample.lat]);
-  // Map arrow = true travel direction (GPS). Video offset is visual calibration only.
-  arrow.setRotation(sample.bearing);
+  trackMarker.setLngLat([sample.lon, sample.lat]);
+  // Map arrow = true travel direction (GPS). Video yaw offset is visual calibration only.
+  trackMarker.setRotation(sample.bearing);
   updateOrientPad();
 
   if (alignHeading.checked && !isDragging) {

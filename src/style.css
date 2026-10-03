@@ -200,6 +200,32 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* GPS position + travel heading on the route map */
+.track-marker {
+  width: 56px;
+  height: 56px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+}
+
+.track-marker-svg {
+  display: block;
+  overflow: visible;
+}
+
+.track-marker-heading {
+  /* Amber — high contrast vs neon-green track and forest basemap */
+  fill: #ffd400;
+  stroke: #0d1117;
+  stroke-width: 3;
+}
+
+.track-marker-dot {
+  fill: #ff2d55;
+  stroke: #ffffff;
+  stroke-width: 3.25;
+}
+
 #map {
   width: 100%;
   height: 100%;
