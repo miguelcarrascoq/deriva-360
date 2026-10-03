@@ -1,6 +1,9 @@
 import * as THREE from 'three';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 /** Asset URL under Vite `base` (needed for GitHub Pages `/deriva-360/`). */
 function assetUrl(path) {
