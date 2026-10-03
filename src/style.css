@@ -607,31 +607,25 @@ body {
   }
 }
 
-/* Wide: map + controls on one row inside the panel */
+/* Wide / ultra-wide: keep 2 columns — video | (map stacked over controls).
+   Never put map and controls side-by-side (that reads as 3 columns). */
 @media (min-width: 1200px) {
   #app {
-    grid-template-columns: minmax(0, 1.5fr) minmax(560px, 1fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.72fr);
   }
 
   #sidebar {
-    grid-template-columns: minmax(240px, 1fr) minmax(280px, 1fr);
-    grid-template-rows: 1fr;
-  }
-
-  #map-panel {
-    border-bottom: 0;
-    border-right: 1px solid var(--border);
-    min-height: 0;
-  }
-
-  .controls {
-    padding: 6px 8px 8px;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(200px, 42%) minmax(0, 1fr);
   }
 }
 
-/* Extra-wide: more room for the side panel */
 @media (min-width: 1600px) {
   #app {
-    grid-template-columns: minmax(0, 1.7fr) minmax(720px, 1fr);
+    grid-template-columns: minmax(0, 1.75fr) minmax(400px, 0.65fr);
+  }
+
+  #sidebar {
+    grid-template-rows: minmax(220px, 45%) minmax(0, 1fr);
   }
 }
